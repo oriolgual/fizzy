@@ -1,0 +1,9 @@
+<CORSConfiguration>
+  <CORSRule>
+    <AllowedHeader>*</AllowedHeader>
+    <AllowedMethod>PUT</AllowedMethod>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>HEAD</AllowedMethod>
+    <AllowedOrigin>https://fizzy.gual.me</AllowedOrigin>
+  </CORSRule>
+</CORSConfiguration>

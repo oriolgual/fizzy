@@ -41,3 +41,9 @@
 
 /config/credentials/*.key
 .DS_Store
+
+infra/*.tfstate*
+infra/terraform.tfvars
+infra/.terraform.lock.hcl
+infra/.terraform/
+.kamal/secrets

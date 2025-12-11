@@ -19,9 +19,9 @@ Rails.application.configure do
 
   config.content_security_policy do |policy|
     policy.default_src :self
-    policy.script_src :self, "https://challenges.cloudflare.com"
-    policy.connect_src :self, "https://storage.basecamp.com"
-    policy.frame_src :self, "https://challenges.cloudflare.com"
+    policy.script_src :self, ENV.fetch("CSP_SCRIPT_SRC", "https://challenges.cloudflare.com")
+    policy.connect_src :self, ENV.fetch("CSP_CONNECT_SRC", "https://storage.basecamp.com")
+    policy.frame_src :self, ENV.fetch("CSP_FRAME_SRC", "https://challenges.cloudflare.com")
 
     # Don't fight user tools: permit inline styles, data:/https: sources, and
     # blob: workers for accessibility extensions, privacy tools, and custom fonts.

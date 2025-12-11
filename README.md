@@ -38,6 +38,9 @@ We've added comments to that file to highlight what each setting needs to be, bu
 - `proxy/ssl` and `proxy/host`: Kamal can set up SSL certificates for you automatically. To enable that, set the hostname again as `host`. If you don't want SSL for some reason, you can set `ssl: false` to turn it off.
 - `env/clear/MAILER_FROM_ADDRESS`: This is the email address that Fizzy will send emails from. It should usually be an address from the same domain where you're running Fizzy.
 - `env/clear/SMTP_ADDRESS`: The address of an SMTP server that you can send email through. You can use a 3rd-party service for this, like Sendgrid or Postmark, in which case their documentation will tell you what to use for this.
+- `env/clear/CSP_SCRIPT_SRC`: Specifies valid sources for JavaScript `<script>` elements and WebAssembly resources.
+- `env/clear/CSP_CONNECT_SRC`: Restricts the URLs which can be loaded using script interfaces.
+- `env/clear/CSP_FRAME_SRC`: Specifies valid sources for nested browsing contexts loaded into elements such as `<frame>` and `<iframe>`.
 
 Fizzy also requires a few environment variables to be set up, some of which contain secrets.
 The simplest way to do this is to put them in a file called `.kamal/secrets`.

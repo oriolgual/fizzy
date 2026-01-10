@@ -1,0 +1,67 @@
+#cloud-config
+hostname: ${hostname}
+
+timezone: Europe/Berlin
+users:
+  - name: kamal
+    groups: users, sudo, docker
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_import_id:
+      - gh:${github_username}
+packages:
+  - fail2ban
+  - ufw
+  - aide
+  - rkhunter
+  - lynis
+  - apparmor-utils
+package_update: true
+package_upgrade: true
+swap:
+  filename: /swap.img
+  size: "auto"
+  maxsize: 2G
+runcmd:
+  - "ufw --force reset"
+  - "ufw default deny incoming"
+  - "ufw default allow outgoing"
+  - "ufw allow 2222/tcp"
+  - "ufw --force enable"
+  - "cat > /etc/fail2ban/jail.local << 'EOF'\n[DEFAULT]\nbantime = 3600\nfindtime = 600\nmaxretry = 2\nbackend = systemd\n\n[sshd]\nenabled = true\nport = ssh,2222\nbanaction = iptables-multiport\nlogpath = /var/log/auth.log\nEOF"
+  - "systemctl enable fail2ban"
+  - "systemctl restart fail2ban"
+  - "cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak"
+  - "sed -i -e '/^#\\?Port/s/^.*$/Port 2222/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?PermitRootLogin/s/^.*$/PermitRootLogin no/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?PasswordAuthentication/s/^.*$/PasswordAuthentication no/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?AllowTcpForwarding/s/^.*$/AllowTcpForwarding yes/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?GatewayPorts/s/^.*$/GatewayPorts clientspecified/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?MaxAuthTries/s/^.*$/MaxAuthTries 2/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?PubkeyAuthentication/s/^.*$/PubkeyAuthentication yes/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?AuthorizedKeysFile/s#^.*$#AuthorizedKeysFile .ssh/authorized_keys#' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?UsePAM/s/^.*$/UsePAM yes/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?X11Forwarding/s/^.*$/X11Forwarding no/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?PrintMotd/s/^.*$/PrintMotd no/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?AcceptEnv/s/^.*$/AcceptEnv LANG LC_*/' /etc/ssh/sshd_config"
+  - "sed -i -e '/^#\\?Subsystem/s#^.*$#Subsystem sftp /usr/lib/openssh/sftp-server#' /etc/ssh/sshd_config"
+  - "echo 'AllowUsers kamal' >> /etc/ssh/sshd_config"
+  - "systemctl restart ssh || systemctl restart sshd || true"
+  - "DEBIAN_FRONTEND=noninteractive apt-get install -y unattended-upgrades"
+  - "cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'EOF'\nUnattended-Upgrade::Allowed-Origins {\n    \"$${distro_id}:$${distro_codename}-security\";\n    \"$${distro_id}ESM:$${distro_codename}\";\n};\nUnattended-Upgrade::AutoFixInterruptedDpkg \"true\";\nUnattended-Upgrade::MinimalSteps \"true\";\nUnattended-Upgrade::Remove-Unused-Dependencies \"true\";\nUnattended-Upgrade::Automatic-Reboot \"false\";\nEOF"
+  - "systemctl enable unattended-upgrades"
+  - "cat > /etc/logrotate.d/rsyslog << 'EOF'\n/var/log/syslog {\n    daily\n    missingok\n    rotate 7\n    compress\n    delaycompress\n    notifempty\n    create 0640 syslog adm\n    postrotate\n        invoke-rc.d rsyslog rotate > /dev/null\n    endscript\n}\nEOF"
+  - 'sed -i ''s/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="swapaccount=1 /'' /etc/default/grub'
+  - "update-grub"
+  - "cat >> /etc/modprobe.d/blacklist-network.conf << 'EOF'\ninstall dccp /bin/true\ninstall sctp /bin/true\ninstall rds /bin/true\ninstall tipc /bin/true\nEOF"
+  - "echo 'net.ipv4.conf.all.send_redirects = 0' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.conf.default.send_redirects = 0' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.conf.all.accept_redirects = 0' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.conf.default.accept_redirects = 0' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.conf.all.secure_redirects = 0' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.conf.default.secure_redirects = 0' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.icmp_echo_ignore_broadcasts = 1' >> /etc/sysctl.conf"
+  - "echo 'net.ipv4.icmp_ignore_bogus_error_responses = 1' >> /etc/sysctl.conf"
+  - "sysctl -p"
+  - "shutdown -r +1"

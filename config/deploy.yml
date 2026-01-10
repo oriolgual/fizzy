@@ -2,22 +2,22 @@
 service: fizzy
 image: fizzy
 
-
 #-- About your deployment --#
 
 # Where to deploy fizzy
 servers:
   web:
-    - fizzy.example.com  # Set your server name here
+    - fizzy.gual.me
 
 # How you connect to your server
 ssh:
-  user: root  # If you use a different username to SSH to your server, specify it here
+  user: kamal
+  port: 2222
 
 # Automatic SSL
 proxy:
-  ssl: true                # Set this to false if you *don't* want SSL
-  host: fizzy.example.com  # Set your server name here to use automatic SSL
+  ssl: true # Set this to false if you *don't* want SSL
+  host: fizzy.gual.me # Set your server name here to use automatic SSL
 
 # Your application configuration (secrets come from .kamal/secrets).
 env:
@@ -27,11 +27,22 @@ env:
     - VAPID_PRIVATE_KEY
     - SMTP_USERNAME
     - SMTP_PASSWORD
+    - SMTP_PORT
+    - SMTP_DOMAIN
+    - S3_ACCESS_KEY_ID
+    - S3_SECRET_ACCESS_KEY
+    - S3_BUCKET
+    - S3_ENDPOINT
+    - S3_REGION
   clear:
-    MAILER_FROM_ADDRESS: support@example.com # The email "from" address that Fizzy sends email from
-    SMTP_ADDRESS: mail.example.com # The SMTP server you'll use to send email
+    BASE_URL: https://fizzy.gual.me
+    MAILER_FROM_ADDRESS: services@gual.me
+    SMTP_ADDRESS: smtp.mail.me.com
     SOLID_QUEUE_IN_PUMA: true # Run background jobs in the app container
-
+    ACTIVE_STORAGE_SERVICE: s3
+    CSP_CONNECT_SRC: https://fsn1.your-objectstorage.com
+    S3_FORCE_PATH_STYLE: "true"
+    MULTI_TENANT: false # Set to true to allow multiple accounts to sign up
 
 #-- General configuration --#
 
@@ -50,7 +61,7 @@ aliases:
 # Use a persistent storage volume for sqlite database files and local Active Storage files.
 # Recommended to change this to a mounted volume path that is backed up off server.
 volumes:
-  - "fizzy_storage:/rails/storage"
+  - "/mnt/fizzy_storage:/rails/storage"
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old

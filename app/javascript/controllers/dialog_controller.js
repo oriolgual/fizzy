@@ -5,11 +5,13 @@ export default class extends Controller {
   static targets = [ "dialog" ]
   static values = {
     modal: { type: Boolean, default: false },
-    sizing: { type: Boolean, default: true }
+    sizing: { type: Boolean, default: true },
+    autoOpen: { type: Boolean, default: false }
   }
 
   connect() {
     this.dialogTarget.setAttribute("aria-hidden", "true")
+    if (this.autoOpenValue) this.open()
   }
 
   open() {

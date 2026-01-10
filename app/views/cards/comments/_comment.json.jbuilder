@@ -11,6 +11,11 @@ json.cache! comment do
 
   json.creator comment.creator, partial: "users/user", as: :user
 
+  json.card do
+    json.id comment.card_id
+    json.url card_url(comment.card_id)
+  end
+
   json.reactions_url card_comment_reactions_url(comment.card_id, comment.id)
   json.url card_comment_url(comment.card_id, comment.id)
 end

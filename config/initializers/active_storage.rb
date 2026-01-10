@@ -35,6 +35,17 @@ module ActiveStorageControllerExtensions
   end
 end
 
+module ActiveStorageDirectUploadsControllerExtensions
+  extend ActiveSupport::Concern
+
+  included do
+    include Authentication
+    include Authorization
+    skip_forgery_protection if: :authenticate_by_bearer_token
+  end
+end
+
 Rails.application.config.to_prepare do
   ActiveStorage::BaseController.include ActiveStorageControllerExtensions
+  ActiveStorage::DirectUploadsController.include ActiveStorageDirectUploadsControllerExtensions
 end

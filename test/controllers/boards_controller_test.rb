@@ -15,6 +15,16 @@ class BoardsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "invalidates page title cache when account updates" do
+    get board_path(boards(:writebook))
+    etag = response.headers["ETag"]
+
+    accounts("37s").update!(name: "Renamed Account")
+
+    get board_path(boards(:writebook)), headers: { "If-None-Match" => etag }
+    assert_response :success
+  end
+
   test "create" do
     assert_difference -> { Board.count }, +1 do
       post boards_path, params: { board: { name: "Remodel Punch List" } }

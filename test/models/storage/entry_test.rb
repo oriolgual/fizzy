@@ -7,7 +7,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     @card = cards(:logo)
   end
 
-  test "record! creates entry with positive delta" do
+  test "record creates entry with positive delta" do
     assert_difference "Storage::Entry.count", +1 do
       entry = Storage::Entry.record \
         account: @account,
@@ -25,7 +25,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     end
   end
 
-  test "record! creates entry with negative delta" do
+  test "record creates entry with negative delta" do
     entry = Storage::Entry.record \
       account: @account,
       board: @board,
@@ -37,7 +37,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     assert_equal "detach", entry.operation
   end
 
-  test "record! returns nil and creates no entry when delta is zero" do
+  test "record returns nil and creates no entry when delta is zero" do
     assert_no_difference "Storage::Entry.count" do
       result = Storage::Entry.record \
         account: @account,
@@ -50,12 +50,14 @@ class Storage::EntryTest < ActiveSupport::TestCase
     end
   end
 
-  test "record! accepts _id params for after_destroy_commit snapshots" do
+  test "record works with destroyed records (destroyed? check)" do
+    # Simulate a destroyed record - .id still works after destroy
+    @card.destroy
+
     entry = Storage::Entry.record \
-      account_id: @account.id,
-      board_id: @board.id,
-      recordable_type: "Card",
-      recordable_id: @card.id,
+      account: @account,
+      board: @board,
+      recordable: @card,
       delta: 2048,
       operation: "detach"
 
@@ -65,7 +67,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     assert_equal @card.id, entry.recordable_id
   end
 
-  test "record! creates entry without board" do
+  test "record creates entry without board" do
     entry = Storage::Entry.record \
       account: @account,
       board: nil,
@@ -76,7 +78,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     assert_nil entry.board_id
   end
 
-  test "record! creates entry without recordable" do
+  test "record creates entry without recordable" do
     entry = Storage::Entry.record \
       account: @account,
       board: @board,
@@ -88,7 +90,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     assert_nil entry.recordable_id
   end
 
-  test "record! enqueues MaterializeJob for account" do
+  test "record enqueues MaterializeJob for account" do
     assert_enqueued_with job: Storage::MaterializeJob, args: [ @account ] do
       Storage::Entry.record \
         account: @account,
@@ -99,7 +101,7 @@ class Storage::EntryTest < ActiveSupport::TestCase
     end
   end
 
-  test "record! enqueues MaterializeJob for board when board_id present" do
+  test "record enqueues MaterializeJob for board when board_id present" do
     assert_enqueued_with job: Storage::MaterializeJob, args: [ @board ] do
       Storage::Entry.record \
         account: @account,
@@ -110,31 +112,36 @@ class Storage::EntryTest < ActiveSupport::TestCase
     end
   end
 
-  test "record! does not enqueue job when account is deleted" do
-    # The graceful handling is that find_by returns nil, so no job is enqueued
-    # for a non-existent account. We can't test with a fake ID due to FK constraints,
-    # but we can verify the find_by behavior by stubbing.
-    Account.stubs(:find_by).returns(nil)
+  test "record skips entirely when account is destroyed" do
+    # No need to track storage for deleted accounts
+    @account.destroy
 
-    assert_no_enqueued_jobs only: Storage::MaterializeJob do
-      Storage::Entry.record \
+    assert_no_difference "Storage::Entry.count" do
+      result = Storage::Entry.record \
         account: @account,
         delta: 1024,
         operation: "attach"
+
+      assert_nil result
     end
   end
 
-  test "record! does not enqueue board job when board is deleted" do
-    Board.stubs(:find_by).returns(nil)
+  test "record does not enqueue board job when board is destroyed" do
+    @board.destroy
 
-    # Account job still enqueued, but board job is not
-    entry = Storage::Entry.record \
-      account: @account,
-      board: @board,
-      delta: 1024,
-      operation: "attach"
+    # Account job still enqueued, but destroyed board skips its job
+    jobs = []
+    assert_enqueued_with job: Storage::MaterializeJob, args: [ @account ] do
+      Storage::Entry.record \
+        account: @account,
+        board: @board,
+        delta: 1024,
+        operation: "attach"
+    end
 
-    assert_not_nil entry
+    # Verify board job was NOT enqueued
+    board_jobs = enqueued_jobs.select { |j| j["arguments"].include?(@board.to_global_id.to_s) }
+    assert_empty board_jobs
   end
 
   test "entries belong to account" do

@@ -63,10 +63,12 @@ class Cards::CommentsControllerTest < ActionDispatch::IntegrationTest
   test "show as JSON" do
     comment = comments(:logo_agreement_kevin)
 
-    get card_comment_path(cards(:logo), comment), as: :json
+    get card_comment_path(comment.card, comment), as: :json
 
     assert_response :success
     assert_equal comment.id, @response.parsed_body["id"]
+    assert_equal comment.card.id, @response.parsed_body.dig("card", "id")
+    assert_equal card_url(comment.card.id), @response.parsed_body.dig("card", "url")
   end
 
   test "update as JSON" do

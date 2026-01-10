@@ -36,6 +36,15 @@
     }
   }
 
+  .popup__footer {
+    border-block-start: 1px solid var(--color-ink-lightest);
+    color: var(--card-color);
+    margin-block-start: var(--popup-item-padding-inline);
+    padding: var(--popup-item-padding-inline) var(--popup-item-padding-inline) 0;
+    text-align: center;
+    text-transform: initial;
+  }
+
   .popup__title {
     font-weight: 800;
     white-space: nowrap;

@@ -154,8 +154,7 @@ module FixturesTestHelper
 
       # Format as UUID string and convert to base36 (25 chars)
       uuid = "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x" % bytes
-      hex = uuid.delete("-")
-      hex.to_i(16).to_s(36).rjust(25, "0")
+      ActiveRecord::Type::Uuid.hex_to_base36(uuid.delete("-"))
     end
   end
 end

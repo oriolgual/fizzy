@@ -45,6 +45,10 @@ export default class extends Controller {
     this.selectItem(target, true)
   }
 
+  hoverSelect({ currentTarget }) {
+    this.selectItem(currentTarget)
+  }
+
   selectCurrentOrReset(event) {
     if (this.currentItem) {
       this.#setCurrentFrom(this.currentItem)
@@ -221,6 +225,20 @@ export default class extends Controller {
     })
   }
 
+  // Public accessors for card_hotkeys_controller outlet
+  get visibleItems() {
+    return this.#visibleItems
+  }
+
+  clearSelection() {
+    this.#clearSelection()
+    this.currentItem = null
+  }
+
+  get hasFocus() {
+    return this.element.contains(document.activeElement)
+  }
+
   #keyHandlers = {
     ArrowDown(event) {
       if (this.supportsVerticalNavigationValue) {
@@ -253,6 +271,6 @@ export default class extends Controller {
       } else {
         this.#clickCurrentItem(event)
       }
-    },
+    }
   }
 }

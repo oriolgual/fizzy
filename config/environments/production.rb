@@ -11,13 +11,25 @@ Rails.application.configure do
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.smtp_settings = {
       address: smtp_address,
-      port: ENV.fetch("SMTP_PORT", "587").to_i,
+      port: ENV.fetch("SMTP_PORT", ENV["SMTP_TLS"] == "true" ? "465" : "587").to_i,
       domain: ENV.fetch("SMTP_DOMAIN", nil),
       user_name: ENV.fetch("SMTP_USERNAME", nil),
       password: ENV.fetch("SMTP_PASSWORD", nil),
       authentication: ENV.fetch("SMTP_AUTHENTICATION", "plain"),
-      enable_starttls_auto: ENV.fetch("SMTP_ENABLE_STARTTLS_AUTO", "true") == "true"
+      tls: ENV["SMTP_TLS"] == "true",
+      openssl_verify_mode: ENV["SMTP_SSL_VERIFY_MODE"]
     }
+  end
+
+  # Base URL for links in emails and other external references.
+  # Set BASE_URL to your instance's public URL (e.g., https://fizzy.example.com)
+  if base_url = ENV["BASE_URL"].presence
+    uri = URI.parse(base_url)
+    url_options = { host: uri.host, protocol: uri.scheme }
+    url_options[:port] = uri.port if uri.port != uri.default_port
+
+    routes.default_url_options = url_options
+    config.action_mailer.default_url_options = url_options
   end
 
   # Code is not reloaded between requests.
@@ -60,20 +72,20 @@ Rails.application.configure do
   # config.action_cable.url = "wss://example.com/cable"
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
 
+  # Set DISABLE_SSL=true to disable all SSL options, rather than specify each individually
+  ssl_enabled = "true" unless ENV["DISABLE_SSL"] == "true"
+
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
-  config.assume_ssl = ENV.fetch("ASSUME_SSL", "true") == "true"
+  config.assume_ssl = ENV.fetch("ASSUME_SSL", ssl_enabled) == "true"
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
+  config.force_ssl = ENV.fetch("FORCE_SSL", ssl_enabled) == "true"
 
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)
                                        .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
                                        .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
-
-  # Suppress unstructured log lines
-  config.log_level = :fatal
 
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
@@ -104,4 +116,7 @@ Rails.application.configure do
 
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Select Active Storage service via env var; default to production's S3 config.
+  config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "local").to_sym
 end

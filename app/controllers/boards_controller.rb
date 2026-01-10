@@ -83,7 +83,7 @@ class BoardsController < ApplicationController
     def show_columns
       cards = @board.cards.awaiting_triage.latest.with_golden_first.preloaded
       set_page_and_extract_portion_from cards
-      fresh_when etag: [ @board, @page.records, @user_filtering ]
+      fresh_when etag: [ @board, @page.records, @user_filtering, Current.account ]
     end
 
     def board_params

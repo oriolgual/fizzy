@@ -5,6 +5,13 @@ a bot to perform various actions for you.
 
 ## Authentication
 
+There are two ways to authenticate with the Fizzy API:
+
+1. **Personal access tokens** - Long-lived tokens for scripts and integrations
+2. **Magic link authentication** - Session-based authentication for native apps
+
+### Personal Access Tokens
+
 To use the API you'll need an access token. To get one, go to your profile, then,
 in the API section, click on "Personal access tokens" and then click on
 "Generate new access token".
@@ -35,6 +42,81 @@ To authenticate a request using your access token, include it in the `Authorizat
 ```bash
 curl -H "Authorization: Bearer put-your-access-token-here" -H "Accept: application/json" https://app.fizzy.do/my/identity
 ```
+
+### Magic Link Authentication
+
+For native apps, you can authenticate users via magic links. This is a two-step process:
+
+#### 1. Request a magic link
+
+Send the user's email address to request a magic link be sent to them:
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"email_address": "user@example.com"}' \
+  https://app.fizzy.do/session
+```
+
+__Response:__
+
+```
+HTTP/1.1 201 Created
+Set-Cookie: pending_authentication_token=...; HttpOnly; SameSite=Lax
+```
+
+```json
+{
+  "pending_authentication_token": "eyJfcmFpbHMi..."
+}
+```
+
+The response includes a `pending_authentication_token` both in the JSON body and as a cookie.
+Native apps should store this token and include it as a cookie when submitting the magic link code.
+
+__Error responses:__
+
+| Status Code | Description |
+|--------|-------------|
+| `422 Unprocessable entity` | Invalid email address, if sign ups are enabled and the value isn't a valid email address |
+| `429 Too Many Requests` | Rate limit exceeded |
+
+#### 2. Submit the magic link code
+
+Once the user receives the magic link email, they'll have a 6-character code. Submit it to complete authentication:
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -H "Cookie: pending_authentication_token=eyJfcmFpbHMi..." \
+  -d '{"code": "ABC123"}' \
+  https://app.fizzy.do/session/magic_link
+```
+
+__Response:__
+
+```json
+{
+  "session_token": "eyJfcmFpbHMi..."
+}
+```
+
+The `session_token` can be used to authenticate subsequent requests by including it as a cookie:
+
+```bash
+curl -H "Cookie: session_token=eyJfcmFpbHMi..." \
+  -H "Accept: application/json" \
+  https://app.fizzy.do/my/identity
+```
+
+__Error responses:__
+
+| Status Code | Description |
+|--------|-------------|
+| `401 Unauthorized` | Invalid `pending_authentication_token` or `code` |
+| `429 Too Many Requests` | Rate limit exceeded |
 
 ## Caching
 
@@ -178,10 +260,11 @@ curl -X POST \
       "content_type": "image/png"
     }
   }' \
-  https://app.fizzy.do/rails/active_storage/direct_uploads
+  https://app.fizzy.do/123456/rails/active_storage/direct_uploads
 ```
 
 The `checksum` is a Base64-encoded MD5 hash of the file content.
+The direct upload endpoint is scoped to your account (replace `/123456` with your account slug).
 
 __Response:__
 
@@ -481,7 +564,60 @@ Returns a specific card by its number.
 
 __Response:__
 
-Same as the card object in the list response.
+```json
+{
+  "id": "03f5vaeq985jlvwv3arl4srq2",
+  "number": 1,
+  "title": "First!",
+  "status": "published",
+  "description": "Hello, World!",
+  "description_html": "<div class=\"action-text-content\"><p>Hello, World!</p></div>",
+  "image_url": null,
+  "tags": ["programming"],
+  "golden": false,
+  "last_active_at": "2025-12-05T19:38:48.553Z",
+  "created_at": "2025-12-05T19:38:48.540Z",
+  "url": "http://fizzy.localhost:3006/897362094/cards/4",
+  "board": {
+    "id": "03f5v9zkft4hj9qq0lsn9ohcm",
+    "name": "Fizzy",
+    "all_access": true,
+    "created_at": "2025-12-05T19:36:35.534Z",
+    "url": "http://fizzy.localhost:3006/897362094/boards/03f5v9zkft4hj9qq0lsn9ohcm",
+    "creator": {
+      "id": "03f5v9zjw7pz8717a4no1h8a7",
+      "name": "David Heinemeier Hansson",
+      "role": "owner",
+      "active": true,
+      "email_address": "david@example.com",
+      "created_at": "2025-12-05T19:36:35.401Z",
+      "url": "http://fizzy.localhost:3006/897362094/users/03f5v9zjw7pz8717a4no1h8a7"
+    }
+  },
+  "creator": {
+    "id": "03f5v9zjw7pz8717a4no1h8a7",
+    "name": "David Heinemeier Hansson",
+    "role": "owner",
+    "active": true,
+    "email_address": "david@example.com",
+    "created_at": "2025-12-05T19:36:35.401Z",
+    "url": "http://fizzy.localhost:3006/897362094/users/03f5v9zjw7pz8717a4no1h8a7"
+  },
+  "comments_url": "http://fizzy.localhost:3006/897362094/cards/4/comments",
+  "steps": [
+    {
+      "id": "03f8huu0sog76g3s975963b5e",
+      "content": "This is the first step",
+      "completed": false
+    },
+    {
+      "id": "03f8huu0sog76g3s975969734",
+      "content": "This is the second step",
+      "completed": false
+    }
+  ]
+}
+```
 
 ### `POST /:account_slug/boards/:board_id/cards`
 
@@ -495,6 +631,7 @@ Creates a new card in a board.
 | `image` | file | No | Header image for the card |
 | `tag_ids` | array | No | Array of tag IDs to apply to the card |
 | `created_at` | datetime | No | Override creation timestamp (ISO 8601 format) |
+| `last_active_at` | datetime | No | Override last activity timestamp (ISO 8601 format) |
 
 __Request:__
 
@@ -522,6 +659,7 @@ Updates a card.
 | `status` | string | No | Card status: `drafted`, `published` |
 | `image` | file | No | Header image for the card |
 | `tag_ids` | array | No | Array of tag IDs to apply to the card |
+| `last_active_at` | datetime | No | Override last activity timestamp (ISO 8601 format) |
 
 __Request:__
 
@@ -658,6 +796,10 @@ __Response:__
       "created_at": "2025-12-05T19:36:35.401Z",
       "url": "http://fizzy.localhost:3006/897362094/users/03f5v9zjw7pz8717a4no1h8a7"
     },
+    "card": {
+      "id": "03f5v9zo9qlcwwpyc0ascnikz",
+      "url": "http://fizzy.localhost:3006/897362094/cards/03f5v9zo9qlcwwpyc0ascnikz"
+    },
     "reactions_url": "http://fizzy.localhost:3006/897362094/cards/3/comments/03f5v9zo9qlcwwpyc0ascnikz/reactions",
     "url": "http://fizzy.localhost:3006/897362094/cards/3/comments/03f5v9zo9qlcwwpyc0ascnikz"
   }
@@ -687,6 +829,10 @@ __Response:__
     "email_address": "david@example.com",
     "created_at": "2025-12-05T19:36:35.401Z",
     "url": "http://fizzy.localhost:3006/897362094/users/03f5v9zjw7pz8717a4no1h8a7"
+  },
+  "card": {
+    "id": "03f5v9zo9qlcwwpyc0ascnikz",
+    "url": "http://fizzy.localhost:3006/897362094/cards/03f5v9zo9qlcwwpyc0ascnikz"
   },
   "reactions_url": "http://fizzy.localhost:3006/897362094/cards/3/comments/03f5v9zo9qlcwwpyc0ascnikz/reactions",
   "url": "http://fizzy.localhost:3006/897362094/cards/3/comments/03f5v9zo9qlcwwpyc0ascnikz"

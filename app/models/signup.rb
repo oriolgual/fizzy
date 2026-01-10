@@ -8,6 +8,7 @@ class Signup
 
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, on: :identity_creation
   validates :full_name, :identity, presence: true, on: :completion
+  validates :full_name, length: { maximum: 240 }
 
   def initialize(...)
     super

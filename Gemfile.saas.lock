@@ -20,37 +20,15 @@ GIT
       rainbow
 
 GIT
-  remote: https://github.com/basecamp/fizzy-saas
-  revision: a14df11b57818697df4b2cc7b6a43e762ebaa196
-  specs:
-    fizzy-saas (0.1.0)
-      audits1984
-      console1984
-      prometheus-client-mmap (~> 1.4.0)
-      queenbee
-      rails (>= 8.1.0.beta1)
-      rails_structured_logging
-      sentry-rails
-      sentry-ruby
-      yabeda
-      yabeda-actioncable
-      yabeda-activejob
-      yabeda-gc
-      yabeda-http_requests
-      yabeda-prometheus-mmap
-      yabeda-puma-plugin
-      yabeda-rails (>= 0.10)
-
-GIT
   remote: https://github.com/basecamp/lexxy
-  revision: d292280b6d2c5d8a924327adf8bb9f0b25953539
+  revision: 7c197c0afc7095c89df9cb6e24484df9e7212ac8
   specs:
-    lexxy (0.1.23.beta)
+    lexxy (0.1.24.beta)
       rails (>= 8.0.2)
 
 GIT
   remote: https://github.com/basecamp/queenbee-plugin
-  revision: 15faf03a876c5e66b67753d2e1ddb24f1eb5abb2
+  revision: 14312a940471e20617b38cdec7c092a01567d18b
   specs:
     queenbee (3.2.0)
       activeresource
@@ -82,8 +60,8 @@ GIT
 
 GIT
   remote: https://github.com/rails/rails.git
-  revision: 0636a79d1bf268db6cdbbc6327106d08c3ff3751
-  branch: ast-immediate-variants-process-locally
+  revision: 4f4e0acaf558f6adf7df3ac23a51beb470463901
+  branch: main
   specs:
     actioncable (8.2.0.alpha)
       actionpack (= 8.2.0.alpha)
@@ -181,6 +159,27 @@ GIT
       tsort (>= 0.2)
       zeitwerk (~> 2.6)
 
+PATH
+  remote: saas
+  specs:
+    fizzy-saas (0.1.0)
+      audits1984
+      console1984
+      prometheus-client-mmap (~> 1.4.0)
+      queenbee
+      rails (>= 8.1.0.beta1)
+      rails_structured_logging
+      sentry-rails
+      sentry-ruby
+      yabeda
+      yabeda-actioncable
+      yabeda-activejob
+      yabeda-gc
+      yabeda-http_requests
+      yabeda-prometheus-mmap
+      yabeda-puma-plugin
+      yabeda-rails (>= 0.10)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -201,8 +200,8 @@ GEM
     ast (2.4.3)
     autotuner (1.1.0)
     aws-eventstream (1.4.0)
-    aws-partitions (1.1187.0)
-    aws-sdk-core (3.239.1)
+    aws-partitions (1.1197.0)
+    aws-sdk-core (3.240.0)
       aws-eventstream (~> 1, >= 1.3.0)
       aws-partitions (~> 1, >= 1.992.0)
       aws-sigv4 (~> 1.9)
@@ -213,7 +212,7 @@ GEM
     aws-sdk-kms (1.118.0)
       aws-sdk-core (~> 3, >= 3.239.1)
       aws-sigv4 (~> 1.5)
-    aws-sdk-s3 (1.205.0)
+    aws-sdk-s3 (1.208.0)
       aws-sdk-core (~> 3, >= 3.234.0)
       aws-sdk-kms (~> 1)
       aws-sigv4 (~> 1.5)
@@ -223,7 +222,7 @@ GEM
     bcrypt (3.1.20)
     bcrypt_pbkdf (1.1.1)
     benchmark (0.5.0)
-    bigdecimal (3.3.1)
+    bigdecimal (4.0.1)
     bindex (0.8.1)
     bootsnap (1.19.0)
       msgpack (~> 1.2)
@@ -347,7 +346,7 @@ GEM
       railties (>= 7.1)
       stimulus-rails
       turbo-rails
-    mittens (0.3.0)
+    mittens (0.3.1)
     mocha (2.8.2)
       ruby2_keywords (>= 0.0.5)
     msgpack (1.8.0)
@@ -558,11 +557,12 @@ GEM
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
     stringio (3.1.9)
+    stripe (18.0.1)
     thor (1.4.0)
-    thruster (0.1.16)
-    thruster (0.1.16-aarch64-linux)
-    thruster (0.1.16-arm64-darwin)
-    thruster (0.1.16-x86_64-linux)
+    thruster (0.1.17)
+    thruster (0.1.17-aarch64-linux)
+    thruster (0.1.17-arm64-darwin)
+    thruster (0.1.17-x86_64-linux)
     timeout (0.4.4)
     trilogy (2.9.0)
     tsort (0.2.0)
@@ -684,6 +684,7 @@ DEPENDENCIES
   solid_queue (~> 1.2)
   sqlite3 (>= 2.0)
   stimulus-rails
+  stripe (~> 18.0)
   thruster
   trilogy (~> 2.9)
   turbo-rails

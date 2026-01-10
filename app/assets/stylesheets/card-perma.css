@@ -277,7 +277,7 @@
       border-radius: 99rem;
     }
 
-    .btn:not(.popup__btn, .btn--plain, .btn--reversed) {
+    .btn:not(.popup__btn, .btn--plain, .btn--reversed, .settings-subscription__button) {
       --btn-background: var(--card-color);
       --btn-color: var(--color-ink-inverted);
     }
@@ -296,6 +296,19 @@
 
     @media (max-width: 639px) {
       flex-direction: column;
+    }
+  }
+
+  .card-perma__notch-new-card-buttons {
+    display: flex;
+    gap: var(--inline-space-half);
+
+    @media (max-width: 479px) {
+      flex-direction: column;
+
+      .btn {
+        inline-size: 100%;
+      }
     }
   }
 
